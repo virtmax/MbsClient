@@ -7,7 +7,7 @@
 
     Copyright (C) 2014 Maxim Singer
 
-    License: GNU GPLv2 (https://www.gnu.org/licenses/gpl-2.0.html)
+    License: GNU GPLv3 (https://www.gnu.org/licenses/gpl-3.0.html)
 
     Source code: https://github.com/virtmax/MbsClient
 */
