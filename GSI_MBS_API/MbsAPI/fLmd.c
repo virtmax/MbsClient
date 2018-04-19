@@ -29,6 +29,9 @@
 #include <unistd.h>
 #include <pwd.h>
 #include <sys/timeb.h>
+#ifndef fpos64_t
+#define fpos64_t fpos_t
+#endif
 #endif
 
 #ifdef Solaris /* Solaris */
