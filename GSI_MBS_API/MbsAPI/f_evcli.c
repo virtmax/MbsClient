@@ -196,13 +196,11 @@ static struct
   /* ++ vectors of pointer and devices for cleanup */
   long          v_mem_clnup[8];
 /***************************************************************************/
-int f_evcli_con(s_evt_channel *ps_chan, char *pc_node, int l_aport, int l_aevents, int l_asample)
+int f_evcli_con(s_evt_channel *ps_chan, const char *pc_node, int l_aport, int l_aevents, int l_asample)
 /***************************************************************************/
 {
-  short                 i, i_h, i_m, i_s;
-  char                  arg[80], c_hms[16], c_help[4];
-  int                  l_evtecho,*pl;
-  char                  c_node[32], c_name[32], c_retmsg[256];
+  short                i_h, i_m, i_s;
+  char                  c_node[32], c_retmsg[256];
   int                  l_port;
 
   v_mem_clnup[0] = 0;
@@ -381,10 +379,8 @@ return(STC__SUCCESS);
 
 /***************************************************************************/
 int f_evcli_buf(s_evt_channel *ps_chan)
-/***************************************************************************/
 {
   s_ve10_1 *ps_ve10_1;
-  int ii;
   char *ps_buf;
   /* ++++++++++++++++++++++++++++++ */
   /* +++ send acknowledge buffer +++ */
@@ -472,7 +468,6 @@ return(l_sts);
 
 /***************************************************************************/
 int f_evcli_evt(s_evt_channel *ps_chan)
-/***************************************************************************/
 {
   int *ps_int;
   s_ve10_1 *ps_ve10_1;
@@ -489,9 +484,9 @@ int f_evcli_evt(s_evt_channel *ps_chan)
   }
   else  return(-1);
 }
+
 /***************************************************************************/
 int f_evcli_close(s_evt_channel *ps_chan)
-/***************************************************************************/
 {
   /* ++++++++++++++++++++++++++++++ */
   /* +++ send acknowledge buffer +++ */
@@ -548,17 +543,12 @@ return(STC__SUCCESS);
 /*                                                                    */
 /*3+Description***+***********+****************************************/
 /*1- C Procedure ***********+******************************************/
-int f_fltdscr(p_clnt_filter)           /* read filter, check and         */
-                                           /* constr. flt_descriptor         */
-struct s_clnt_filter *p_clnt_filter;
+int f_fltdscr(struct s_clnt_filter* p_clnt_filter)           /* read filter, check and         */
 {
    static char               c_modnam[] = "f_fltdscr";
    struct s_filter    *p_filter;
    struct s_opc1      *p_opc1;
    struct s_flt_descr *p_flt_descr;
-   struct s_pat1      *p_pat1;
-   struct s_pat2      *p_pat2;
-   struct s_pat3      *p_pat3;
 
    short              i_fltdescnt = 0;
    short              i_fltcnt = 0;
@@ -571,7 +561,6 @@ struct s_clnt_filter *p_clnt_filter;
    int               l_evtdescr, *pl_evtdescr, *pl_sev1descr, *pl_sev2descr;
    short              i_lasevtflt, i_1stsevflt;
 
-   int unsigned      l_status, l_sts;
    int unsigned      l_retsts = 0;
 
    /* +++ action +++ */
@@ -899,28 +888,20 @@ struct s_clnt_filter *p_clnt_filter;
 /*                                                                    */
 /*3+Description***+***********+****************************************/
 /*1- C Procedure ***********+******************************************/
-int f_fltrd(p_clnt_filter, c_file)
-struct s_clnt_filter *p_clnt_filter;
-char                 *c_file;                     /* ptr to file name        */
+int f_fltrd(struct s_clnt_filter* p_clnt_filter, char* c_file)
 {
-
-   /* ++++ declaration ++++ */
    FILE               *infile;
 
    static char        c_modnam[] = "f_fltrd";
    struct s_filter    *p_filter;
    struct s_opc1      *p_opc1;
-   struct s_flt_descr *p_flt_descr;
-   struct s_pat1      *p_pat1;
-   struct s_pat2      *p_pat2;
-   struct s_pat3      *p_pat3;
 
    char               c_retmsg[256];
    char               c_line[80], c_comment[80], *c_fsts, *p_com, *p_minus;
    short              i_fltblklen = 0;
-   short         i_currflt = 0;
-   short              i, j;
-   int               l, l_scan=0;
+   short            i_currflt = 0;
+   short              i;
+   int               l_scan=0;
 
    int unsigned      l_pattern;
    int               l_offset;
@@ -1156,8 +1137,7 @@ char                 *c_file;                     /* ptr to file name        */
 /*                                                                    */
 /*3+Description***+***********+****************************************/
 /*1- C Procedure ***********+******************************************/
-int f_typflt(p_clnt_filter)
-struct s_clnt_filter *p_clnt_filter;
+int f_typflt(struct s_clnt_filter* p_clnt_filter)
 {
    static char               c_modnam[] = "f_typflt";
    struct s_filter    *p_filter;
@@ -1464,11 +1444,7 @@ struct s_clnt_filter *p_clnt_filter;
 /*                                                                    */
 /*3+Description***+***********+****************************************/
 /*1- C Procedure ***********+******************************************/
-int        f_read_server(ps_chan, p_bytrd, l_timeout, i_chan)
-s_evt_channel *ps_chan;
-int             *p_bytrd;
-int             l_timeout;
-int              i_chan;
+int f_read_server(s_evt_channel* ps_chan, int* p_bytrd, int l_timeout, int i_chan)
 {
   /* ++++ declarations ++++ */
 int             l_maxbytes;
@@ -1694,9 +1670,7 @@ int             l_maxbytes;
 /*                                                                    */
 /*3+Description***+***********+****************************************/
 /*1- C Procedure ***********+******************************************/
-int        f_send_ackn(l_clnt_sts, i_chan)
-int             l_clnt_sts;
-int              i_chan;
+int f_send_ackn(int l_clnt_sts, int i_chan)
 {
   /* ++++ declarations ++++ */
   int            l_status;                              /* !!! */
@@ -1770,8 +1744,7 @@ int              i_chan;
 /*                                                                    */
 /*3+Description***+***********+****************************************/
 /*1- C Procedure ***********+******************************************/
-void f_strtoupper(u, l)
-char *u, *l;
+void f_strtoupper(char *u, char *l)
 {
      for ( ; *l != '\0'; ++l, ++u)
          *u = toupper(*l);
@@ -1823,15 +1796,10 @@ char *u, *l;
 /*3+Description***+***********+****************************************/
 /*1- C Procedure ***********+******************************************/
 /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
-void f_clnup(v_mem, p_keyb)
-long v_mem[];
-int *p_keyb;
 /* cleanup: free allocated memory and dealloc allocated device(s) */
+void f_clnup(long v_mem[], int *p_keyb)
 {
-  /* ++++ declaration ++++ */
-  static char     c_modnam[] = "f_clnup";
   short    i;
-  int     l_status;
 
   for (i = 1; i <= v_mem[0]; i++)
   {
@@ -1843,16 +1811,9 @@ int *p_keyb;
   v_mem[0]=0;
 }
 /*******************************************************************/
-void f_clnup_save(v_mem, p_keyb)
-long v_mem[];
-int *p_keyb;
 /* cleanup: free allocated memory and dealloc allocated device(s) */
+void f_clnup_save(long v_mem[], int *p_keyb)
 {
-  /* ++++ declaration ++++ */
-  static char     c_modnam[] = "f_clnup";
-  short    i;
-  int     l_status;
-
   /*  printf("all  %d:",v_mem[0]);fflush(stdout);*/
   v_mem[++v_mem[0]] = (long) p_keyb; /* was (int) before JA */
 

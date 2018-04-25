@@ -467,10 +467,9 @@ INTS4 f_stc_write(void *p_buffer, INTS4 i_buflen, INTS4 i_channel)
 /*1- PLI Main ****************+****************************************/
 /* %%-HEAD: */
 
-INTS4 f_stc_connectserver(CHARS *c_node, INTS4 l_port, INTS4 *pi_channel, struct s_tcpcomm *ps_client)
+INTS4 f_stc_connectserver(const CHARS *c_node, INTS4 l_port, INTS4 *pi_channel, struct s_tcpcomm *ps_client)
 {
-   INTS4 shut , retval ;
-   INTS4 thirty = 30;
+   INTS4 retval;
    struct s_tcpcomm s_client;
 
 
@@ -662,9 +661,6 @@ INTS4 f_stc_connectserver(CHARS *c_node, INTS4 l_port, INTS4 *pi_channel, struct
 
 INTS4 f_stc_acceptclient(struct s_tcpcomm *ps_server, INTS4 *pi_channel)
 {
-   INTS4 i_socket;
-   struct hostent  *he;
-
 #ifdef GSI__AIX
    *pi_channel = accept( ps_server->sock_rw,
          ( struct sockaddr *) &ps_server->sock_name,
@@ -824,8 +820,7 @@ if( *pi_channel == -1)
 INTS4 f_stc_createserver(INTS4 *pl_port, struct s_tcpcomm *ps_server)
 {
 
-   INTS4 retval , i , retry , on ;
-   struct protoent *p;
+   INTS4 retval, retry;
    struct s_tcpcomm s_server;
 
 
@@ -851,8 +846,6 @@ INTS4 f_stc_createserver(INTS4 *pl_port, struct s_tcpcomm *ps_server)
    }
 
 #endif
-
-   on = 1;
 
    if( *pl_port == 0 ) {
       retry = 1 ;

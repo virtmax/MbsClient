@@ -62,8 +62,6 @@
 
 INTS4 f_ut_utime(INTS4 l_sec, INTS4 l_msec, CHARS *pc_time)
 {
-
-  time_t t_time;
   struct timeb tp;
   struct tm st_time;
   struct tm buf_time;

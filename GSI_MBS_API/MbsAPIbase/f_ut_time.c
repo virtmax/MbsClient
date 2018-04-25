@@ -60,34 +60,32 @@
 #include <stdio.h>
 #include <time.h>
 
-CHARS     *f_ut_time (CHARS *pc_time)
+CHARS *f_ut_time (CHARS *pc_time)
 {
+    struct timeb tp;
+    struct tm st_time;
+    struct tm buf_time;
 
-  time_t    t_time;
-  struct timeb tp;
-  struct tm st_time;
-  struct tm buf_time;
-
-  ftime (&tp);
+    ftime (&tp);
 
 #ifdef Lynx
-/* Note: due to an error in POSIX Version of localtime, 1 day has to be */
-/* added to get the correct date. During daylight saving period 1 hour */
-/* has to be added additionaly                                         */
-  tp.time+=86400; /* add 1 day */
-  localtime_r(&st_time,&tp.time);
-  if(st_time.tm_mon > 2 && st_time.tm_mon < 9)    /* daylight saving ? */
-  {
-    tp.time+=3600;
+    /* Note: due to an error in POSIX Version of localtime, 1 day has to be */
+    /* added to get the correct date. During daylight saving period 1 hour */
+    /* has to be added additionaly                                         */
+    tp.time+=86400; /* add 1 day */
     localtime_r(&st_time,&tp.time);
-  }
+    if(st_time.tm_mon > 2 && st_time.tm_mon < 9)    /* daylight saving ? */
+    {
+        tp.time+=3600;
+        localtime_r(&st_time,&tp.time);
+    }
 #else
 #ifdef WIN32
-  st_time=*localtime(&tp.time);
+    st_time=*localtime(&tp.time);
 #else
-  st_time=*localtime_r(&tp.time, &buf_time);
+    st_time=*localtime_r(&tp.time, &buf_time);
 #endif
 #endif
-  strftime(pc_time,30,"%d-%h-%y %T",&st_time);
-  return ((CHARS *) pc_time);
+    strftime(pc_time,30,"%d-%h-%y %T",&st_time);
+    return ((CHARS *) pc_time);
 }
