@@ -69,11 +69,6 @@ int clock_gettime(int clockid, struct timespec *tp)
 #define fseeko64 fseek
 #define fpos64_t fpos_t
 
-struct timespec {
-    long   tv_sec;        /* seconds */
-    long   tv_nsec;       /* nanoseconds */
-};
-
 #if defined(_MSC_VER) || defined(_MSC_EXTENSIONS)
 #define DELTA_EPOCH_IN_MICROSECS  11644473600000000Ui64
 #else
