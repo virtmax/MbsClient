@@ -1974,6 +1974,11 @@ INTS4 f_evt_get_newbuf(s_evt_channel *ps_chan)
    INTS4 l_status;
 
    pc_temp=(CHARS *)ps_chan->pc_io_buf;
+
+   // sometimes l_channel_no is = -1 and pc_temp=0. that leads to a crash.
+   if(ps_chan->l_channel_no < 0 || pc_temp == 0)
+       return GETEVT__RDERR;
+
    switch(ps_chan->l_server_type)
    {
    case GETEVT__FILE :
