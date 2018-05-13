@@ -115,14 +115,14 @@ public:
      *
      * @return The size of the received data in bytes.
      */
-    size_t getSizeOfReceivedData() const { return sizeOfReceivedData; }
+    size_t getSizeOfReceivedData() const;
 
     /**
      * @brief Return the number of event in the event list.
      *
      * @return The number of events in the event list.
      */
-    size_t getNumberOfEventsInBuffer() const { return eventBuffer.size(); }
+    size_t getNumberOfEventsInBuffer() const;
 
     /**
      * @brief Return the name of the MBS Server.
@@ -187,6 +187,7 @@ private:
     s_bufhe *bufferHeader;
 
     std::string mbsSource;
-    size_t sizeOfReceivedData;   // in bytes
+    std::atomic<size_t> nEventsInBuffer;
+    std::atomic<size_t> sizeOfReceivedData;   // in bytes
 };
 

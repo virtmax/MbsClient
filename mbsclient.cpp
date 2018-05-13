@@ -22,6 +22,7 @@ MbsClient::MbsClient() : mbsSource("not connected")
 {
     disconnected = true;
     sizeOfReceivedData = 0;
+    nEventsInBuffer = 0;
 
     inputChannel = 0;
     fileHeader = 0;
@@ -37,6 +38,7 @@ MbsClient::~MbsClient()
 bool MbsClient::connect(std::string mbsSource, ConnectionOption conOpt, bool poolForNextFile)
 {
     sizeOfReceivedData = 0;
+    nEventsInBuffer = 0;
 
     INTS4 sourceType = 0;
     if(conOpt == ConnectionOption::file)
@@ -94,6 +96,7 @@ bool MbsClient::connect(std::vector<std::string> fileList, bool poolForNextFile)
     this->fileList = fileList;
 
     sizeOfReceivedData = 0;
+    nEventsInBuffer = 0;
 
     if(openLmdFile(fileList.at(0), GETEVT__FILE))
     {
@@ -312,6 +315,8 @@ void MbsClient::eventReceiver()
                 }
             }
         }
+
+        nEventsInBuffer = eventBuffer.size();
     }
 
     if(disconnected)
@@ -324,7 +329,10 @@ void MbsClient::clearEventBuffer()
     std::unique_lock<std::mutex> ulock(queueMutex);
 
     if(ulock.owns_lock())
+    {
         eventBuffer.clear();
+        nEventsInBuffer = 0;
+    }
 }
 
 void MbsClient::getEventData(std::vector<MbsClient::MbsEvent> &dest, size_t nElementsToCopy)
@@ -340,7 +348,19 @@ void MbsClient::getEventData(std::vector<MbsClient::MbsEvent> &dest, size_t nEle
             dest.insert(dest.end(), eventBuffer.begin(), eventBuffer.begin()+nElementsToCopy);
             eventBuffer.erase(eventBuffer.begin(), eventBuffer.begin()+nElementsToCopy);
         }
+
+        nEventsInBuffer = eventBuffer.size();
     }
+}
+
+size_t MbsClient::getSizeOfReceivedData() const
+{
+    return sizeOfReceivedData;
+}
+
+size_t MbsClient::getNumberOfEventsInBuffer() const
+{
+    return nEventsInBuffer;
 }
 
 std::string MbsClient::getEventServerName() const
