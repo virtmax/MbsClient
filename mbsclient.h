@@ -111,6 +111,12 @@ public:
     void clearEventBuffer();
 
     /**
+     * @brief Return the number of received events.
+     * @return The number of received events.
+     */
+    size_t getNumberOfReceivedEvents() const;
+
+    /**
      * @brief Return the size of the received data in bytes.
      *
      * @return The size of the received data in bytes.
@@ -188,6 +194,7 @@ private:
 
     std::string mbsSource;
     std::atomic<size_t> nEventsInBuffer;
+    std::atomic<size_t> nReceivedEvents;
     std::atomic<size_t> sizeOfReceivedData;   // in bytes
 };
 

@@ -23,6 +23,7 @@ MbsClient::MbsClient() : mbsSource("not connected")
     disconnected = true;
     sizeOfReceivedData = 0;
     nEventsInBuffer = 0;
+    nReceivedEvents = 0;
 
     inputChannel = 0;
     fileHeader = 0;
@@ -97,6 +98,7 @@ bool MbsClient::connect(std::vector<std::string> fileList, bool poolForNextFile)
 
     sizeOfReceivedData = 0;
     nEventsInBuffer = 0;
+    nReceivedEvents = 0;
 
     if(openLmdFile(fileList.at(0), GETEVT__FILE))
     {
@@ -212,9 +214,6 @@ bool MbsClient::disconnect()
     // acquire lock
     std::unique_lock<std::mutex> lock(queueMutex);
 
-    /*    if(input_channel==0)
-        return false;
-*/
     disconnected = true;
     lock.unlock();
 
@@ -312,6 +311,7 @@ void MbsClient::eventReceiver()
                     eventBuffer.push_back(mbsevent);
 
                     sizeOfReceivedData += dataLength*sizeof(int32_t);
+                    nReceivedEvents++;
                 }
             }
         }
@@ -356,6 +356,11 @@ void MbsClient::getEventData(std::vector<MbsClient::MbsEvent> &dest, size_t nEle
 size_t MbsClient::getSizeOfReceivedData() const
 {
     return sizeOfReceivedData;
+}
+
+size_t MbsClient::getNumberOfReceivedEvents() const
+{
+    return nReceivedEvents;
 }
 
 size_t MbsClient::getNumberOfEventsInBuffer() const
