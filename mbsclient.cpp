@@ -195,15 +195,15 @@ void MbsClient::newFileSeeker()
         if(fs::exists(nextFilePath))
         {
             std::cout << "Next LMD file '"<< nextFilePath
-                      <<"' will be opened automaticly after the previous file is have been analysed."<< std::endl;
+                      <<"' will be opened automatically after the previous file is have been analyzed."<< std::endl;
 
             // acquire lock
             std::unique_lock<std::mutex> ulock(filelistMutex);
 
             fileList.push_back(nextFilePath);
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
-
+		else
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 
