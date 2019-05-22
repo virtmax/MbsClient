@@ -3,7 +3,7 @@
 //       The GSI Online Offline Object Oriented (Go4) Project
 //         Experiment Data Processing at EE department, GSI
 //-----------------------------------------------------------------------
-// Copyright (C) 2000- GSI Helmholtzzentrum für Schwerionenforschung GmbH
+// Copyright (C) 2000- GSI Helmholtzzentrum f?r Schwerionenforschung GmbH
 //                     Planckstr. 1, 64291 Darmstadt, Germany
 // Contact:            http://go4.gsi.de
 //-----------------------------------------------------------------------
@@ -65,8 +65,12 @@ int clock_gettime(int clockid, struct timespec *tp)
 #include <wchar.h>
 
 #define fgetpos64 fgetpos
+
 #define fopen64 fopen
+#ifndef __MINGW64__
 #define fseeko64 fseek
+#endif
+
 #define fpos64_t fpos_t
 
 #if defined(_MSC_VER) || defined(_MSC_EXTENSIONS)
@@ -75,7 +79,11 @@ int clock_gettime(int clockid, struct timespec *tp)
 #define DELTA_EPOCH_IN_MICROSECS  11644473600000000ULL
 #endif
 
+#ifndef CLOCK_REALTIME
 #define CLOCK_REALTIME 1
+
+
+#endif
 
 int clock_gettime(int clockid, struct timespec *tp)
 {

@@ -88,7 +88,7 @@ typedef struct
    s_bufhe  *ps_bufhe;
    s_bufhe  s_bufhe_1;        /* keep buffer header of 1st buffer for spanned event */
    s_ve10_1 *ps_ve10_1;
-   CHARS    c_channel[128];   /* channel name */
+   CHARS    c_channel[256];   /* channel name */
    INTS4    l_tagfile_no;     /* file descripter or server No.    */
    INTS4    l_tagswap;
    INTS4    l_lmdswap;

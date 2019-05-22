@@ -69,7 +69,7 @@ public:
      * @return true, if the connection is established.
      *
      * @example MbsClient mbsclient;
-     *          mbsclient.connect("192.168.20.37", MbsClient::CONNECTION_OPTION::automatic);
+     *          mbsclient.connect("192.168.20.37", MbsClient::ConnectionOption::automatic, true);
      */
     bool connect(std::string mbsSource, ConnectionOption conOpt, bool poolForNextFile);
 
@@ -84,7 +84,7 @@ public:
      * @example MbsClient mbsclient;
      *          mbsclient.connect({"data_0023.lmd", "data_0124.lmd"}, true);
      */
-    bool connect(std::vector<std::string> fileList, bool poolForNextFile);
+    bool connect(std::vector<std::string> filelist, bool poolForNextFile);
 
     /**
      * @brief Close the connection to the MBS stream server or close the current LMD file.
@@ -98,6 +98,14 @@ public:
      * @return true, if a connection is established.
      */
     bool isConnected() const { return !disconnected; }
+
+    /**
+     * @brief Set a limit for the internal data buffer to avoid high RAM usage.
+     *          The client will wait with reading the LMD files
+     *          until the data from internal buffer was copied by getEventData(...).
+     * @param maxEventBufferSize
+     */
+    void setBufferLimit(size_t maxEventBufferSize);
 
     /**
      * @brief Give the number of the MBS events stored in the event buffer.
@@ -137,10 +145,15 @@ public:
      */
     std::string getEventServerName() const;
 
+    /**
+     * @brief Return the list of files used by client.
+     * @return The list of files used by client.
+     */
+    std::vector<std::string> getFilelist() const;
 
     struct MbsEvent
     {
-        long long timestamp;    // unix time in milliseconds (sometimes the same between events...)
+        uint64_t timestamp;         // unix time in milliseconds (sometimes the same between events...)
         std::vector<uint32_t> data; // raw data
     };
 
@@ -175,7 +188,7 @@ private:
     // buffer for received mbs events
     std::deque<MbsEvent> eventBuffer;
 
-    std::vector<std::string> fileList;
+    std::vector<std::string> filelist;
     size_t currentFileIndex = 0;
 
     // thread stuff for reading the data
@@ -196,5 +209,7 @@ private:
     std::atomic<size_t> nEventsInBuffer;
     std::atomic<size_t> nReceivedEvents;
     std::atomic<size_t> sizeOfReceivedData;   // in bytes
+
+    size_t maxEventBufferSize;   // default: 1e6
 };
 

@@ -24,10 +24,11 @@ MbsClient::MbsClient() : mbsSource("not connected")
     sizeOfReceivedData = 0;
     nEventsInBuffer = 0;
     nReceivedEvents = 0;
+    maxEventBufferSize = 1e6;
 
-    inputChannel = 0;
-    fileHeader = 0;
-    bufferHeader = 0;
+    inputChannel = nullptr;
+    fileHeader = nullptr;
+    bufferHeader = nullptr;
 }
 
 MbsClient::~MbsClient()
@@ -74,10 +75,10 @@ bool MbsClient::connect(std::string mbsSource, ConnectionOption conOpt, bool poo
         poolForNextFile = false;
     }
 
-    fileList.push_back(mbsSource);
+    filelist.push_back(mbsSource);
 
 
-    if(openLmdFile(fileList.at(0), sourceType))
+    if(openLmdFile(filelist.at(0), sourceType))
     {
         if(poolForNextFile)
             fileseekThread.push_back(std::thread(&MbsClient::newFileSeeker, this));
@@ -94,7 +95,7 @@ bool MbsClient::connect(std::vector<std::string> fileList, bool poolForNextFile)
     if(fileList.size() == 0)
         return false;
 
-    this->fileList = fileList;
+    this->filelist = fileList;
 
     sizeOfReceivedData = 0;
     nEventsInBuffer = 0;
@@ -115,9 +116,9 @@ bool MbsClient::connect(std::vector<std::string> fileList, bool poolForNextFile)
 
 bool MbsClient::openLmdFile(std::string mbsSource, INTS4 sourceType)
 {
-    inputChannel = 0;
-    fileHeader = 0;
-    bufferHeader = 0;
+    inputChannel = nullptr;
+    fileHeader = nullptr;
+    bufferHeader = nullptr;
 
     // initialize the input channel
     inputChannel = f_evt_control();
@@ -145,7 +146,7 @@ bool MbsClient::openLmdFile(std::string mbsSource, INTS4 sourceType)
 
     this->mbsSource = mbsSource;
 
-    if (fileHeader != 0)
+    if (fileHeader != nullptr)
     {
         std::cout << "The event source is open..." << std::endl
                   << "filhe_dlen : " << fileHeader->filhe_dlen << std::endl
@@ -161,7 +162,7 @@ void MbsClient::newFileSeeker()
 {
     while(!disconnected)
     {
-        auto fullpath = fs::path(fileList.back());
+        auto fullpath = fs::path(filelist.back());
         auto filename = fullpath.filename();
         auto dirPath = fullpath.parent_path();
 
@@ -200,7 +201,7 @@ void MbsClient::newFileSeeker()
             // acquire lock
             std::unique_lock<std::mutex> ulock(filelistMutex);
 
-            fileList.push_back(nextFilePath);
+            filelist.push_back(nextFilePath);
         }
 		else
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -227,24 +228,29 @@ bool MbsClient::disconnect()
         fileseekThread.at(i).join();
     }
 
-    if(inputChannel!=0)
+    if(inputChannel != nullptr)
         f_evt_get_close(inputChannel);
-    inputChannel = 0;
+    inputChannel = nullptr;
 
-    fileHeader = 0;
-    bufferHeader = 0;
+    fileHeader = nullptr;
+    bufferHeader = nullptr;
     mbsSource = "not connected";
     return true;
 }
 
+void MbsClient::setBufferLimit(size_t maxEventBufferSize)
+{
+    this->maxEventBufferSize = maxEventBufferSize;
+}
+
 void MbsClient::eventReceiver()
 {
-    int32_t *eventData = 0;
+    int32_t *eventData = nullptr;
     
-    while(inputChannel != 0 && disconnected==false)
+    while(inputChannel != nullptr && disconnected==false)
     {
         int32_t result = 0;
-        eventData = 0;
+        eventData = nullptr;
         result = f_evt_get_event(inputChannel, &eventData, (INTS4**) (&bufferHeader));
 
         if(result == GETEVT__NOMORE)
@@ -253,10 +259,10 @@ void MbsClient::eventReceiver()
                       << "Close "<<mbsSource << std::endl;
             f_evt_get_close(inputChannel);
 
-            if(fileList.size() > currentFileIndex+1)
+            if(filelist.size() > currentFileIndex+1)
             {
                 currentFileIndex++;
-                std::string next_mbs_source = fileList.at(currentFileIndex);
+                std::string next_mbs_source = filelist.at(currentFileIndex);
 
                 std::cout << "Try to open " << next_mbs_source<< std::endl;
 
@@ -276,8 +282,13 @@ void MbsClient::eventReceiver()
 
         if(result != GETEVT__SUCCESS)
         {
-            std::this_thread::sleep_for(std::chrono::microseconds(500)); // wait to reduce CPU load
+            std::this_thread::sleep_for(std::chrono::milliseconds(1)); // wait to reduce CPU load
             continue;
+        }
+
+        if(nEventsInBuffer > maxEventBufferSize)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(50)); // wait to reduce CPU load
         }
 
         // uncomment the following lines to output the "raw data and header info from the event"
@@ -286,8 +297,10 @@ void MbsClient::eventReceiver()
         f_evt_type(buffer_header, (s_evhe*) eventData, -1, 0, 1, 0);
         std::cout << "----------------------------------------------------" << std::endl;
         */
-        long long mbsTimestamp = ((long long)bufferHeader->l_time[0])*1000 + bufferHeader->l_time[1];
-        //std::cout << buffer_header->l_time[0] << " "<< buffer_header->l_time[1] << "  " << mbsTimestamp << std::endl;
+        uint64_t mbsTimestamp = static_cast<uint64_t>(bufferHeader->l_time[0])*1000
+                                    + static_cast<uint64_t>(bufferHeader->l_time[1]);
+        // if(this->eventBuffer.size()==0)
+        //    std::cout << bufferHeader->l_time[0] << " "<< bufferHeader->l_time[1] << "  " << mbsTimestamp << std::endl;
 
         MbsEvent mbsevent;
         mbsevent.timestamp = mbsTimestamp;
@@ -297,8 +310,8 @@ void MbsClient::eventReceiver()
 
         for(int sub = 1; result != GETEVT__NOMORE; ++sub)
         {
-            s_ves10_1 *subeventHeader = 0;
-            int32_t *data = 0;
+            s_ves10_1 *subeventHeader = nullptr;
+            int32_t *data = nullptr;
             int32_t dataLength = 0;
 
             result = f_evt_get_subevent((s_ve10_1*) eventData, sub,
@@ -365,10 +378,15 @@ size_t MbsClient::getNumberOfReceivedEvents() const
 
 size_t MbsClient::getNumberOfEventsInBuffer() const
 {
-    return nEventsInBuffer;
+    return eventBuffer.size();
 }
 
 std::string MbsClient::getEventServerName() const
 {
     return mbsSource;
+}
+
+std::vector<std::string> MbsClient::getFilelist() const
+{
+    return filelist;
 }
