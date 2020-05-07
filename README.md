@@ -3,7 +3,7 @@
 A C++ client for a GSI MBS stream server.
 Can also asynchronously open a set of LMD (List Mode) files.
 
-Requirements: C++17 compiler with `<filesystem>` support.
+Requirements: C++17 compiler with `<filesystem>` support (e.g. GNU G++ 8 or MSVS C++ 2017).
 
 ## License
 

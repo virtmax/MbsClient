@@ -5,7 +5,7 @@
     This software uses the MBS API developed a GSI (Gesellschaft für Schwerionenforschung)
     that is licensed under GNU GPLv2+. See GSI_MBS_API/Go4License.txt for more information.
 
-    Copyright (C) 2014 Maxim Singer
+    Copyright (C) 2014-2020 Maxim Singer
 
     License: GNU GPLv3 (https://www.gnu.org/licenses/gpl-3.0.html)
 
@@ -16,7 +16,7 @@
 
 #include "mbsclient.h"
 
-namespace fs = std::experimental::filesystem;
+namespace fs = std::filesystem;
 
 MbsClient::MbsClient() : mbsSource("not connected")
 {
