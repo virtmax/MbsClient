@@ -5,7 +5,7 @@
     This software uses the MBS API developed a GSI (Gesellschaft für Schwerionenforschung)
     that is licensed under GNU GPLv2+. See GSI_MBS_API/Go4License.txt for more information.
 
-    Copyright (C) 2014-2020 Maxim Singer
+    Copyright (C) 2014-2023 Maxim Singer
 
     License: GNU GPLv3 (https://www.gnu.org/licenses/gpl-3.0.html)
 
@@ -41,6 +41,8 @@ bool MbsClient::connect(std::string mbsSource, ConnectionOption conOpt, bool poo
 {
     sizeOfReceivedData = 0;
     nEventsInBuffer = 0;
+    nReceivedEvents = 0;
+    noMoreEvents = false;
 
     INTS4 sourceType = 0;
     if(conOpt == ConnectionOption::file)
@@ -100,6 +102,7 @@ bool MbsClient::connect(std::vector<std::string> fileList, bool poolForNextFile)
     sizeOfReceivedData = 0;
     nEventsInBuffer = 0;
     nReceivedEvents = 0;
+    noMoreEvents = false;
 
     if(openLmdFile(fileList.at(0), GETEVT__FILE))
     {
@@ -222,11 +225,13 @@ bool MbsClient::disconnect()
     {
         receiverThread.at(i).join();
     }
+    receiverThread.clear();
 
     for(size_t i = 0; i < fileseekThread.size();i++)
     {
         fileseekThread.at(i).join();
     }
+    fileseekThread.clear();
 
     if(inputChannel != nullptr)
         f_evt_get_close(inputChannel);
@@ -246,7 +251,7 @@ void MbsClient::setBufferLimit(size_t maxEventBufferSize)
 void MbsClient::eventReceiver()
 {
     int32_t *eventData = nullptr;
-    
+    int mess = 0;
     while(inputChannel != nullptr && disconnected==false)
     {
         int32_t result = 0;
@@ -273,11 +278,20 @@ void MbsClient::eventReceiver()
                     return;
                 }
             }
+            else
+            {
+                noMoreEvents = true;
+            }
         }
 
-        if(result == GETEVT__FRAGMENT)
+
+        if(result == GETEVT__FRAGMENT && mess < 10)
         {
             std::cout << "event fragment found..." << std::endl;
+            std::cout << "f_evt_type(...) output: " << std::endl;
+            f_evt_type(bufferHeader, (s_evhe*) eventData, -1, 0, 1, 0);
+            std::cout << "----------------------------------------------------" << std::endl;
+            mess++;
         }
 
         if(result != GETEVT__SUCCESS)
@@ -286,6 +300,7 @@ void MbsClient::eventReceiver()
             continue;
         }
 
+        noMoreEvents = false;
         if(nEventsInBuffer > maxEventBufferSize)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(50)); // wait to reduce CPU load
@@ -293,10 +308,12 @@ void MbsClient::eventReceiver()
 
         // uncomment the following lines to output the "raw data and header info from the event"
         /*
-        std::cout << "f_evt_type(...) output: " << std::endl;
-        f_evt_type(buffer_header, (s_evhe*) eventData, -1, 0, 1, 0);
-        std::cout << "----------------------------------------------------" << std::endl;
-        */
+        if(mess > 0)
+        {
+            std::cout << "f_evt_type(...) output: " << std::endl;
+            f_evt_type(bufferHeader, (s_evhe*) eventData, -1, 0, 1, 0);
+            std::cout << "----------------------------------------------------" << std::endl;
+        }*/
         uint64_t mbsTimestamp = static_cast<uint64_t>(bufferHeader->l_time[0])*1000
                                     + static_cast<uint64_t>(bufferHeader->l_time[1]);
         // if(this->eventBuffer.size()==0)
@@ -306,8 +323,7 @@ void MbsClient::eventReceiver()
         mbsevent.timestamp = mbsTimestamp;
 
         // acquire lock
-        std::unique_lock<std::mutex> ulock(queueMutex);
-
+        std::unique_lock<std::mutex> ulock(queueMutex); 
         for(int sub = 1; result != GETEVT__NOMORE; ++sub)
         {
             s_ves10_1 *subeventHeader = nullptr;
@@ -358,8 +374,8 @@ void MbsClient::getEventData(std::vector<MbsClient::MbsEvent> &dest, size_t nEle
         nElementsToCopy = std::min<size_t>(nElementsToCopy, eventBuffer.size());
         if(nElementsToCopy > 0)
         {
-            dest.insert(dest.end(), eventBuffer.begin(), eventBuffer.begin()+nElementsToCopy);
-            eventBuffer.erase(eventBuffer.begin(), eventBuffer.begin()+nElementsToCopy);
+            dest.insert(dest.end(), std::make_move_iterator(eventBuffer.begin()), std::make_move_iterator(eventBuffer.begin()+nElementsToCopy));
+            eventBuffer.erase(eventBuffer.begin(), eventBuffer.begin()+nElementsToCopy);          
         }
 
         nEventsInBuffer = eventBuffer.size();

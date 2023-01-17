@@ -100,6 +100,12 @@ public:
     bool isConnected() const { return !disconnected; }
 
     /**
+     * @brief Return readout status.
+     * @return true, if there are no more events.
+     */
+    bool readoutDone() const { return isConnected() ? noMoreEvents : true; }
+
+    /**
      * @brief Set a limit for the internal data buffer to avoid high RAM usage.
      *          The client will wait with reading the LMD files
      *          until the data from internal buffer was copied by getEventData(...).
@@ -190,6 +196,7 @@ private:
 
     std::vector<std::string> filelist;
     size_t currentFileIndex = 0;
+    bool noMoreEvents = false;
 
     // thread stuff for reading the data
     std::mutex queueMutex;
